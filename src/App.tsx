@@ -1,15 +1,15 @@
 // src/App.tsx
 
 import type { ReactNode } from 'react';
-import { AuthCoreContextProvider, useConnect, useAuthCore } from '@particle-network/authkit';
+import { AuthCoreContextProvider, useConnect, useAuthCore, useDisconnect } from '@particle-network/authkit';
 import { mainnet } from 'viem/chains';
-import { useInitData } from '@telegram-apps/sdk-react';
+import { useRawInitData } from '@telegram-apps/sdk-react';
 import axios from 'axios';
 import './App.css';
 import xeroLogo from './assets/logo.png';
 
-// ★★★ Your Live Backend Tunnel URL is now here ★★★
-const BACKEND_API_URL = 'https://reg-mhz-rendering-bee.trycloudflare.com';
+// ★★★ This link MUST point to your LIVE cloudflared tunnel ★★★
+const BACKEND_API_URL = 'https://consensus-shorter-hardware-hockey.trycloudflare.com';
 
 function ParticleProvider({ children }: { children: ReactNode }) {
   return (
@@ -27,43 +27,36 @@ function ParticleProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Function to send data to our backend bot
-async function saveWalletToBackend(userId: number | undefined, address: string | undefined) {
-    if (!userId || !address) {
-        console.log("Missing userId or address, cannot save.");
+// Sends the data to our backend bot
+async function saveWalletToBackend(initDataRaw: string | undefined, address: string | undefined) {
+    if (!initDataRaw || !address) {
+        alert("Missing user or wallet data. Cannot save.");
         return;
     }
-
     try {
-        console.log(`Attempting to send data to backend: ${BACKEND_API_URL}/save-wallet`);
-        const response = await axios.post(`${BACKEND_API_URL}/save-wallet`, {
-            userId: userId,
+        await axios.post(`${BACKEND_API_URL}/save-wallet`, {
+            initDataRaw: initDataRaw,
             address: address,
         });
-        console.log('✅ Backend Response:', response.data);
-        alert('Wallet saved to bot!');
+        alert('Wallet info sent to bot successfully!');
     } catch (error) {
-        console.error("🔴 FAILED TO SAVE WALLET TO BACKEND:", error);
-        alert("Error: Could not save wallet info. Check the browser and bot console for errors.");
+        console.error("🔴 FAILED TO SAVE WALLET:", error);
+        alert("Error: Could not save wallet to the bot.");
     }
 }
-
 
 function AuthComponent() {
   const { connect, disconnect, connected } = useConnect();
   const { userInfo } = useAuthCore();
-  const initData = useInitData();
+  const rawInitData = useRawInitData();
   
   const handleConnect = async () => {
     try {
       const connectedUserInfo = await connect();
-      
-      // After connecting, find the necessary info
-      const telegramUser = initData?.user;
       const evmWallet = connectedUserInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
 
-      // And send it to our backend!
-      await saveWalletToBackend(telegramUser?.id, evmWallet);
+      // After connecting, send the info to our backend
+      await saveWalletToBackend(rawInitData, evmWallet);
 
     } catch (error) {
       console.error("Connect Error:", error);
@@ -85,7 +78,7 @@ function AuthComponent() {
   return (
     <div className="action-section">
       <h3>Create or Connect Wallet</h3>
-      <button onClick={handleConnect} disabled={!initData}>
+      <button onClick={handleConnect} disabled={!rawInitData}>
         CONNECT / LOGIN
       </button>
       <p className="description">Connect with Email or Socials to control your Xero cross-chain account.</p>
