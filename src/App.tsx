@@ -1,11 +1,14 @@
-echo "import type { ReactNode } from 'react';
-import { AuthCoreContextProvider, useConnect, useAuthCore } from '@particle-network/authkit';
+// src/App.tsx
+
+import type { ReactNode } from 'react';
+import { AuthCoreContextProvider, useConnect, useAuthCore, useDisconnect } from '@particle-network/authkit';
 import { mainnet } from 'viem/chains';
 import { useRawInitData } from '@telegram-apps/sdk-react';
 import axios from 'axios';
 import './App.css';
 import xeroLogo from './assets/logo.png';
 
+// This MUST be the live public URL for your backend server's tunnel
 const BACKEND_API_URL = 'https://consensus-shorter-hardware-hockey.trycloudflare.com';
 
 function ParticleProvider({ children }: { children: ReactNode }) {
@@ -24,32 +27,42 @@ function ParticleProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// This function sends the wallet data back to our bot
 async function saveWalletToBackend(userId: number | undefined, address: string | undefined) {
     if (!userId || !address) {
-        console.error('Missing userId or address, cannot save.');
+        console.error("Missing userId or address, cannot save.");
+        alert("Could not get all required data to save to bot.");
         return;
     }
     try {
-        await axios.post(\`\${BACKEND_API_URL}/save-wallet\`, {
+        console.log(`Sending wallet to backend: User ${userId}, Address ${address}`);
+        const response = await axios.post(`${BACKEND_API_URL}/save-wallet`, {
             userId: userId,
             address: address,
         });
-        console.log('✅ Wallet info sent to backend successfully!');
+        console.log('✅ Backend Response:', response.data);
+        alert('Wallet info has been securely linked to your bot!');
     } catch (error) {
-        console.error('🔴 FAILED TO SAVE WALLET:', error);
+        console.error("🔴 FAILED TO SAVE WALLET:", error);
+        alert("Error: Could not save wallet info to the bot.");
     }
 }
 
 function AuthComponent() {
+  // We get disconnect from the useConnect hook
   const { connect, disconnect, connected } = useConnect();
   const { userInfo } = useAuthCore();
+  
+  // We use useRawInitData as required by the build
   const rawInitData = useRawInitData();
-
+  
   const handleConnect = async () => {
     try {
       const connectedUserInfo = await connect();
-
+      
       const evmWallet = connectedUserInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
+
+      // This logic correctly parses the User ID from the raw data string
       let telegramUserId: number | undefined;
       if (rawInitData) {
         const params = new URLSearchParams(rawInitData);
@@ -59,19 +72,23 @@ function AuthComponent() {
         }
       }
 
+      // We now call the function to save the data
       if (telegramUserId && evmWallet) {
         await saveWalletToBackend(telegramUserId, evmWallet);
+      } else {
+          alert("Could not find a valid Telegram User ID after login.");
       }
+
     } catch (error) {
-      console.error('Connect Error:', error);
+      console.error("Connect Error:", error);
     }
   };
-
+  
   const evmWallet = userInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
 
   if (connected) {
     return (
-      <div className=\"card\">
+      <div className="card">
         <h3>✅ Wallet Connected</h3>
         <p><strong>Address:</strong> {evmWallet || 'n/a'}</p>
         <button onClick={() => disconnect()}>Disconnect</button>
@@ -80,12 +97,12 @@ function AuthComponent() {
   }
 
   return (
-    <div className=\"action-section\">
+    <div className="action-section">
       <h3>Create or Connect Wallet</h3>
       <button onClick={handleConnect} disabled={!rawInitData}>
         CONNECT / LOGIN
       </button>
-      <p className=\"description\">Connect with Email or Socials to control your Xero cross-chain account.</p>
+      <p className="description">Connect with Email or Socials to control your Xero cross-chain account.</p>
     </div>
   );
 }
@@ -93,14 +110,14 @@ function AuthComponent() {
 export default function App() {
   return (
     <ParticleProvider>
-      <div className=\"app-container\">
-        <img src={xeroLogo} className=\"main-logo\" alt=\"Xero Ai Logo\" />
-        <h1 className=\"main-title\">Xero Ai</h1>
+      <div className="app-container">
+        <img src={xeroLogo} className="main-logo" alt="Xero Ai Logo" />
+        <h1 className="main-title">Xero Ai</h1>
         <AuthComponent />
-        <footer className=\"footer\">
+        <footer className="footer">
           Powered By PARTICLE NETWORK
         </footer>
       </div>
     </ParticleProvider>
   );
-}" > src/App.tsx
+}
