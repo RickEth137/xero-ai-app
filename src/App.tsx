@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from 'react';
 import { AuthCoreContextProvider, useConnect, useAuthCore } from '@particle-network/authkit';
 import { mainnet } from 'viem/chains';
-import { AuthType } from '@particle-network/auth-core'; // Make sure this is imported
+import { AuthType } from '@particle-network/auth-core'; // Ensure this is imported
 import { useRawInitData } from '@telegram-apps/sdk-react';
 import axios from 'axios';
 import './App.css';
@@ -19,7 +19,7 @@ function ParticleProvider({ children }: { children: ReactNode }) {
         clientKey: 'cnysS13OCJsTHZXupUvB4uFiI0d2CNvFsNVqtmG3',
         appId: 'd4c2607d-7e24-4ba1-879a-ffa5e4c2040a',
         chains: [mainnet],
-        // Corrected: Provide the auth types you want to enable
+        // ***** FIX 1: Provide a value for authTypes *****
         authTypes:,
         wallet: { visible: true },
       }}
@@ -86,8 +86,8 @@ function AuthComponent() {
     return (
       <div className="card">
         <h3>✅ Wallet Connected</h3>
-        {/* Corrected: Use JavaScript logical OR |
-| */}
+        {/* ***** FIX 2: Use JavaScript logical OR |
+| ***** */}
         <p><strong>Address:</strong> {evmWallet |
 | 'n/a'}</p>
         <button onClick={() => disconnect()}>Disconnect</button>
