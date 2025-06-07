@@ -1,0 +1,12 @@
+{
+  "keys": [
+    {
+      "kty": "RSA",
+      "kid": "my-telegram-bot-key-1",
+      "use": "sig",
+      "alg": "RS256",
+      "e": "AQAB",
+      "n": "tVNL-7NZknCRMcGFIkNcwiw_MGGgD14fonEoMApnTTzWEZ0jh0i-yevoSYzYUdQBnuqT3B7Is0UiJAMvcj93hwCeJQjrZfuQKTPdvMY1WdhwZrROtUtKc4-6nu_q-V9ipMycGuhXwKyqhKp5AeYHp8ZOHyzcp9u1CKGQZaaKkXsB6ZSQQCmjlCSWOTsHcT3Wa5Nxbs-UVpEkdJ4a8cGZP853Qcroe81rl3SatoYdQp18MkkcSR-vOmoNIYTKyX0FGF_ZdF_8hKIgRRL0JOh02WBLwVZ0ULDIoTbbN5HQL1WpJVBQN5jbGuXSaMuiq-KJfv4aWzF1RIrthrwO-g2KOw"
+    }
+  ]
+}
