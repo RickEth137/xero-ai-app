@@ -1,25 +1,21 @@
 // src/App.tsx
 
 import type { ReactNode } from 'react';
-import { AuthCoreContextProvider, ConnectButton, useConnect, useAuthCore, useDisconnect } from '@particle-network/authkit';
-import { mainnet, polygon } from 'viem/chains';
-import { AuthType } from '@particle-network/auth-core';
+import { AuthCoreContextProvider } from '@particle-network/authkit';
+import { useConnect, useAuthCore } from '@particle-network/authkit';
+import { mainnet } from 'viem/chains';
 import './App.css';
 import xeroLogo from './assets/logo.png';
 
 function ParticleProvider({ children }: { children: ReactNode }) {
   return (
     <AuthCoreContextProvider
+      // This is the simplest possible, bare-bones configuration
       options={{
         projectId: '4fec5bff-a62c-484c-8ddc-fe5368af9cdf',
         clientKey: 'cnysS13OCJsTHZXupUvB4uFiI0d2CNvFsNVqtmG3',
         appId: 'd4c2607d-7e24-4ba1-879a-ffa5e4c2040a',
-        
-        // ★★★ THE FINAL FIX: Using only default, stable login methods ★★★
-        authTypes: [AuthType.email, AuthType.google, AuthType.twitter],
-        
-        themeType: 'dark',
-        chains: [mainnet, polygon],
+        chains: [mainnet],
         wallet: { visible: true },
       }}
     >
@@ -29,11 +25,17 @@ function ParticleProvider({ children }: { children: ReactNode }) {
 }
 
 function AuthComponent() {
+  // We get all functions from the one working hook
   const { connect, disconnect, connected } = useConnect();
   const { userInfo } = useAuthCore();
   
   const handleConnect = async () => {
-    await connect();
+    // The simplest connect call that opens the default modal
+    try {
+      await connect();
+    } catch (error) {
+      console.error("Connect Error:", error);
+    }
   };
   
   const evmWallet = userInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
@@ -48,11 +50,12 @@ function AuthComponent() {
     );
   }
 
+  // A simple, standard button that triggers the modal
   return (
     <div className="action-section">
       <h3>Create or Connect Wallet</h3>
       <button onClick={handleConnect}>
-        CONNECT
+        CONNECT / LOGIN
       </button>
       <p className="description">Connect with Email or Socials to control your Xero cross-chain account.</p>
     </div>
