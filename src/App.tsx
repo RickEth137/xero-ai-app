@@ -1,9 +1,9 @@
 // src/App.tsx
 
 import type { ReactNode } from 'react';
-import { AuthCoreContextProvider } from '@particle-network/authkit';
-import { useConnect, useAuthCore } from '@particle-network/authkit';
-import { mainnet, polygon } from 'viem/chains'; // This import is now used again
+import { AuthCoreContextProvider, ConnectButton, useConnect, useAuthCore, useDisconnect } from '@particle-network/authkit';
+import { mainnet, polygon } from 'viem/chains';
+import { AuthType } from '@particle-network/auth-core';
 import './App.css';
 import xeroLogo from './assets/logo.png';
 
@@ -14,13 +14,17 @@ function ParticleProvider({ children }: { children: ReactNode }) {
         projectId: '4fec5bff-a62c-484c-8ddc-fe5368af9cdf',
         clientKey: 'cnysS13OCJsTHZXupUvB4uFiI0d2CNvFsNVqtmG3',
         appId: 'd4c2607d-7e24-4ba1-879a-ffa5e4c2040a',
+        authTypes: [AuthType.email, AuthType.google, AuthType.twitter, AuthType.telegram],
         themeType: 'dark',
-
-        // ★★★ THE FIX IS HERE ★★★
-        // The 'chains' property is required. We are adding it back.
         chains: [mainnet, polygon],
-
         wallet: { visible: true },
+      }}
+      // ★★★ THE FINAL BRANDING FIX IS HERE ★★★
+      // The appearance prop is placed directly on the provider
+      appearance={{
+        logo: 'https://i.imgur.com/XqY2vj3.png',
+        projectName: 'Xero Ai',
+        description: 'Connect to the Xero ecosystem.'
       }}
     >
       {children}
@@ -29,13 +33,10 @@ function ParticleProvider({ children }: { children: ReactNode }) {
 }
 
 function AuthComponent() {
-  const { connect, disconnect, connected } = useConnect();
+  const { connected } = useConnect();
   const { userInfo } = useAuthCore();
-  
-  const handleConnect = async () => {
-    await connect();
-  };
-  
+  const { disconnect } = useDisconnect();
+
   const evmWallet = userInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
 
   if (connected) {
@@ -51,10 +52,8 @@ function AuthComponent() {
   return (
     <div className="action-section">
       <h3>Create or Connect Wallet</h3>
-      <button onClick={handleConnect}>
-        CONNECT
-      </button>
-      <p className="description">Connect with Telegram or another method to control your Xero cross-chain account.</p>
+      <ConnectButton />
+      <p className="description">Connect with Telegram, Email, or Socials to control your Xero cross-chain account.</p>
     </div>
   );
 }
