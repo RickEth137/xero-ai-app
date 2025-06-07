@@ -8,7 +8,7 @@ import axios from 'axios';
 import './App.css';
 import xeroLogo from './assets/logo.png';
 
-// This should be the public URL for your backend's tunnel
+// ★★★ The tunnel connection is back. Please use your LIVE cloudflared URL. ★★★
 const BACKEND_API_URL = 'https://consensus-shorter-hardware-hockey.trycloudflare.com';
 
 function ParticleProvider({ children }: { children: ReactNode }) {
@@ -27,19 +27,34 @@ function ParticleProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Sends wallet data to our backend bot
+// This function sends the wallet data back to our bot
 async function saveWalletToBackend(initDataRaw: string | undefined, address: string | undefined) {
     if (!initDataRaw || !address) {
-        console.error("Missing initDataRaw or address, cannot save.");
+        console.error("Missing user data or wallet address, cannot save to backend.");
         return;
     }
     try {
+        // We need to parse the user ID from the raw initData string
+        let userId: number | undefined;
+        const params = new URLSearchParams(initDataRaw);
+        const userJson = params.get('user');
+        if (userJson) {
+            userId = JSON.parse(decodeURIComponent(userJson)).id;
+        }
+
+        if (!userId) {
+            console.error("Could not parse userId from initDataRaw.");
+            return;
+        }
+
+        console.log(`Sending wallet to backend: User ${userId}, Address ${address}`);
         await axios.post(`${BACKEND_API_URL}/save-wallet`, {
-            initDataRaw: initDataRaw, // Sending the raw data string
+            userId: userId,
             address: address,
         });
         console.log('✅ Wallet info sent to backend successfully!');
         alert('Wallet synced with bot!');
+
     } catch (error) {
         console.error("🔴 FAILED TO SAVE WALLET:", error);
         alert("Error: Could not sync wallet with the bot.");
@@ -58,10 +73,8 @@ function AuthComponent() {
       
       const evmWallet = connectedUserInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
 
-      // After connecting, send the raw initData string and wallet address to our backend
-      if (rawInitData && evmWallet) {
-        await saveWalletToBackend(rawInitData, evmWallet);
-      }
+      // After connecting, send the info to our backend
+      await saveWalletToBackend(rawInitData, evmWallet);
 
     } catch (error) {
       console.error("Connect Error:", error);
