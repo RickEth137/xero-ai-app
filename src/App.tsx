@@ -9,7 +9,7 @@ import axios from 'axios';
 import './App.css';
 import xeroLogo from './assets/logo.png';
 
-const BACKEND_API_URL = 'https://consensus-shorter-hardware-hockey.trycloudflare.com';
+const BACKEND_API_URL = 'https://eugene-although-notebook-rrp.trycloudflare.com';
 
 function ParticleProvider({ children }: { children: ReactNode }) {
   return (
