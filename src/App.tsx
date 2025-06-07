@@ -1,14 +1,13 @@
 // src/App.tsx
 
 import type { ReactNode } from 'react';
-import { AuthCoreContextProvider, useConnect, useAuthCore, useDisconnect } from '@particle-network/authkit';
+import { AuthCoreContextProvider, useConnect, useAuthCore } from '@particle-network/authkit';
 import { mainnet } from 'viem/chains';
-import { useRawInitData } from '@telegram-apps/sdk-react';
+import { useRawInitData } from '@telegram-apps/sdk-react'; // Correct hook name
 import axios from 'axios';
 import './App.css';
 import xeroLogo from './assets/logo.png';
 
-// This MUST be the live public URL for your backend server's tunnel
 const BACKEND_API_URL = 'https://consensus-shorter-hardware-hockey.trycloudflare.com';
 
 function ParticleProvider({ children }: { children: ReactNode }) {
@@ -27,34 +26,30 @@ function ParticleProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// This function sends the wallet data back to our bot
+// Sends wallet data to our backend bot
 async function saveWalletToBackend(userId: number | undefined, address: string | undefined) {
     if (!userId || !address) {
         console.error("Missing userId or address, cannot save.");
-        alert("Could not get all required data to save to bot.");
         return;
     }
     try {
-        console.log(`Sending wallet to backend: User ${userId}, Address ${address}`);
-        const response = await axios.post(`${BACKEND_API_URL}/save-wallet`, {
+        await axios.post(`${BACKEND_API_URL}/save-wallet`, {
             userId: userId,
             address: address,
         });
-        console.log('✅ Backend Response:', response.data);
-        alert('Wallet info has been securely linked to your bot!');
+        console.log('✅ Wallet info sent to backend successfully!');
+        alert('Wallet saved to bot!');
     } catch (error) {
         console.error("🔴 FAILED TO SAVE WALLET:", error);
-        alert("Error: Could not save wallet info to the bot.");
+        alert("Error: Could not save wallet info. Check the browser and bot console for errors.");
     }
 }
 
+
 function AuthComponent() {
-  // We get disconnect from the useConnect hook
   const { connect, disconnect, connected } = useConnect();
   const { userInfo } = useAuthCore();
-  
-  // We use useRawInitData as required by the build
-  const rawInitData = useRawInitData();
+  const rawInitData = useRawInitData(); // Using the correct hook name
   
   const handleConnect = async () => {
     try {
@@ -72,11 +67,10 @@ function AuthComponent() {
         }
       }
 
-      // We now call the function to save the data
       if (telegramUserId && evmWallet) {
         await saveWalletToBackend(telegramUserId, evmWallet);
       } else {
-          alert("Could not find a valid Telegram User ID after login.");
+          alert("Could not find a valid Telegram User ID after login to save the wallet.");
       }
 
     } catch (error) {
@@ -117,7 +111,3 @@ export default function App() {
         <footer className="footer">
           Powered By PARTICLE NETWORK
         </footer>
-      </div>
-    </ParticleProvider>
-  );
-}
