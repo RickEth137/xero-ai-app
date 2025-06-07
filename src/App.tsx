@@ -1,14 +1,14 @@
 // src/App.tsx
 
 import type { ReactNode } from 'react';
-import { AuthCoreContextProvider, useConnect, useAuthCore, useDisconnect } from '@particle-network/authkit';
+import { AuthCoreContextProvider, useConnect, useAuthCore } from '@particle-network/authkit';
 import { mainnet } from 'viem/chains';
-import { useRawInitData } from '@telegram-apps/sdk-react';
+import { useRawInitData } from '@telegram-apps/sdk-react'; // Using the correct hook
 import axios from 'axios';
 import './App.css';
 import xeroLogo from './assets/logo.png';
 
-// ★★★ This link MUST point to your LIVE cloudflared tunnel ★★★
+// This MUST be the live public URL for your backend server's tunnel
 const BACKEND_API_URL = 'https://consensus-shorter-hardware-hockey.trycloudflare.com';
 
 function ParticleProvider({ children }: { children: ReactNode }) {
@@ -27,76 +27,44 @@ function ParticleProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Sends the data to our backend bot
-async function saveWalletToBackend(initDataRaw: string | undefined, address: string | undefined) {
-    if (!initDataRaw || !address) {
-        alert("Missing user or wallet data. Cannot save.");
-        return;
-    }
+// This function sends the wallet data to our backend bot
+async function saveWalletToBackend(userId: number, address: string) {
+    if (!userId || !address) return;
     try {
         await axios.post(`${BACKEND_API_URL}/save-wallet`, {
-            initDataRaw: initDataRaw,
+            userId: userId,
             address: address,
         });
-        alert('Wallet info sent to bot successfully!');
+        console.log('✅ Wallet info sent to backend successfully!');
+        alert('Wallet saved to bot!');
     } catch (error) {
         console.error("🔴 FAILED TO SAVE WALLET:", error);
-        alert("Error: Could not save wallet to the bot.");
+        alert("Error: Could not save wallet info to the bot.");
     }
 }
+
 
 function AuthComponent() {
   const { connect, disconnect, connected } = useConnect();
   const { userInfo } = useAuthCore();
-  const rawInitData = useRawInitData();
+  const rawInitData = useRawInitData(); // Using the correct hook name
   
   const handleConnect = async () => {
     try {
       const connectedUserInfo = await connect();
+      
       const evmWallet = connectedUserInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
 
-      // After connecting, send the info to our backend
-      await saveWalletToBackend(rawInitData, evmWallet);
+      // This logic now correctly gets the user ID from the raw data string
+      let telegramUserId: number | undefined;
+      if (rawInitData) {
+        const params = new URLSearchParams(rawInitData);
+        const userJson = params.get('user');
+        if (userJson) {
+            telegramUserId = JSON.parse(userJson).id;
+        }
+      }
 
-    } catch (error) {
-      console.error("Connect Error:", error);
-    }
-  };
-  
-  const evmWallet = userInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
-
-  if (connected) {
-    return (
-      <div className="card">
-        <h3>✅ Wallet Connected</h3>
-        <p><strong>Address:</strong> {evmWallet || 'n/a'}</p>
-        <button onClick={() => disconnect()}>Disconnect</button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="action-section">
-      <h3>Create or Connect Wallet</h3>
-      <button onClick={handleConnect} disabled={!rawInitData}>
-        CONNECT / LOGIN
-      </button>
-      <p className="description">Connect with Email or Socials to control your Xero cross-chain account.</p>
-    </div>
-  );
-}
-
-export default function App() {
-  return (
-    <ParticleProvider>
-      <div className="app-container">
-        <img src={xeroLogo} className="main-logo" alt="Xero Ai Logo" />
-        <h1 className="main-title">Xero Ai</h1>
-        <AuthComponent />
-        <footer className="footer">
-          Powered By PARTICLE NETWORK
-        </footer>
-      </div>
-    </ParticleProvider>
-  );
-}
+      // And now we send it to the backend
+      if (telegramUserId && evmWallet) {
+        await saveWalletToBackend(telegramUserI
