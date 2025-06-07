@@ -1,14 +1,11 @@
 // src/App.tsx
 
 import type { ReactNode } from 'react';
-import { AuthCoreContextProvider, useConnect, useAuthCore, useDisconnect } from '@particle-network/authkit';
-import { mainnet, polygon } from 'viem/chains';
-import { useInitData } from '@telegram-apps/sdk-react'; // This is the corrected import from the library's actual exports
-import axios from 'axios';
+import { AuthCoreContextProvider, useConnect, useAuthCore } from '@particle-network/authkit';
+import { mainnet } from 'viem/chains';
+import { useRawInitData } from '@telegram-apps/sdk-react'; // FIX: Correct hook name
 import './App.css';
 import xeroLogo from './assets/logo.png';
-
-const BACKEND_API_URL = 'https://recipient-kong-d-somewhere.trycloudflare.com';
 
 function ParticleProvider({ children }: { children: ReactNode }) {
   return (
@@ -17,7 +14,7 @@ function ParticleProvider({ children }: { children: ReactNode }) {
         projectId: '4fec5bff-a62c-484c-8ddc-fe5368af9cdf',
         clientKey: 'cnysS13OCJsTHZXupUvB4uFiI0d2CNvFsNVqtmG3',
         appId: 'd4c2607d-7e24-4ba1-879a-ffa5e4c2040a',
-        chains: [mainnet, polygon],
+        chains: [mainnet],
         wallet: { visible: true },
       }}
     >
@@ -26,41 +23,17 @@ function ParticleProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Added correct types for userId and address
-async function saveWalletToBackend(userId: number, address: string) {
-    try {
-        console.log(`Sending wallet to backend: User ${userId}, Address ${address}`);
-        await axios.post(`${BACKEND_API_URL}/save-wallet`, {
-            userId: userId,
-            address: address,
-        });
-        console.log('Successfully saved wallet to backend.');
-    } catch (error) {
-        console.error("Failed to save wallet to backend:", error);
-    }
-}
-
-
 function AuthComponent() {
+  // FIX: disconnect is correctly taken from useConnect
   const { connect, disconnect, connected } = useConnect();
   const { userInfo } = useAuthCore();
   
-  // ★★★ THE FINAL FIX IS HERE ★★★
-  // The error log was correct. The hook is just called useInitData.
-  // The previous build errors were caused by other problems. This is the correct hook.
-  const initData = useInitData();
+  // FIX: useRawInitData is the correct hook name
+  const rawInitData = useRawInitData();
   
   const handleConnect = async () => {
     try {
-      const connectedUserInfo = await connect();
-      
-      const telegramUser = initData?.user;
-      const evmWallet = connectedUserInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
-
-      if (telegramUser?.id && evmWallet) {
-        await saveWalletToBackend(telegramUser.id, evmWallet);
-      }
-
+      await connect();
     } catch (error) {
       console.error("Connect Error:", error);
     }
@@ -81,7 +54,7 @@ function AuthComponent() {
   return (
     <div className="action-section">
       <h3>Create or Connect Wallet</h3>
-      <button onClick={handleConnect} disabled={!initData}>
+      <button onClick={handleConnect} disabled={!rawInitData}>
         CONNECT / LOGIN
       </button>
       <p className="description">Connect with Email or Socials to control your Xero cross-chain account.</p>
