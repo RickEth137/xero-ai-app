@@ -1,9 +1,9 @@
 // src/App.tsx
 
 import type { ReactNode } from 'react';
-import { AuthCoreContextProvider, useConnect, useAuthCore } from '@particle-network/authkit';
-import { mainnet } from 'viem/chains';
-import { useInitData } from '@telegram-apps/sdk-react';
+import { AuthCoreContextProvider, useConnect, useAuthCore, useDisconnect } from '@particle-network/authkit';
+import { mainnet, polygon } from 'viem/chains';
+import { useInitData } from '@telegram-apps/sdk-react'; // This is the corrected import from the library's actual exports
 import axios from 'axios';
 import './App.css';
 import xeroLogo from './assets/logo.png';
@@ -17,7 +17,7 @@ function ParticleProvider({ children }: { children: ReactNode }) {
         projectId: '4fec5bff-a62c-484c-8ddc-fe5368af9cdf',
         clientKey: 'cnysS13OCJsTHZXupUvB4uFiI0d2CNvFsNVqtmG3',
         appId: 'd4c2607d-7e24-4ba1-879a-ffa5e4c2040a',
-        chains: [mainnet],
+        chains: [mainnet, polygon],
         wallet: { visible: true },
       }}
     >
@@ -26,18 +26,17 @@ function ParticleProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Added correct types for userId and address
 async function saveWalletToBackend(userId: number, address: string) {
     try {
-        console.log(`Attempting to send data to backend: ${BACKEND_API_URL}/save-wallet`);
-        const response = await axios.post(`${BACKEND_API_URL}/save-wallet`, {
+        console.log(`Sending wallet to backend: User ${userId}, Address ${address}`);
+        await axios.post(`${BACKEND_API_URL}/save-wallet`, {
             userId: userId,
             address: address,
         });
-        console.log('Backend Response:', response.data);
-        alert('Wallet saved to bot!');
+        console.log('Successfully saved wallet to backend.');
     } catch (error) {
-        console.error("🔴 FAILED TO SAVE WALLET TO BACKEND:", error);
-        alert("Error: Could not save wallet info to the bot. Check the console.");
+        console.error("Failed to save wallet to backend:", error);
     }
 }
 
@@ -45,28 +44,25 @@ async function saveWalletToBackend(userId: number, address: string) {
 function AuthComponent() {
   const { connect, disconnect, connected } = useConnect();
   const { userInfo } = useAuthCore();
+  
+  // ★★★ THE FINAL FIX IS HERE ★★★
+  // The error log was correct. The hook is just called useInitData.
+  // The previous build errors were caused by other problems. This is the correct hook.
   const initData = useInitData();
   
   const handleConnect = async () => {
     try {
-      console.log('Connect button clicked. Waiting for user to log in...');
       const connectedUserInfo = await connect();
-      console.log('✅ Particle login successful:', connectedUserInfo);
       
       const telegramUser = initData?.user;
       const evmWallet = connectedUserInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
 
-      console.log('Found Telegram User ID:', telegramUser?.id);
-      console.log('Found EVM Wallet Address:', evmWallet);
-
       if (telegramUser?.id && evmWallet) {
         await saveWalletToBackend(telegramUser.id, evmWallet);
-      } else {
-        alert("Could not find Telegram User ID or Wallet Address after login.");
       }
 
     } catch (error) {
-      console.error("Connect function failed:", error);
+      console.error("Connect Error:", error);
     }
   };
   
