@@ -1,9 +1,10 @@
 // src/App.tsx
 
-import { useState, type ReactNode } from 'react';
-import { AuthCoreContextProvider, useConnect, useAuthCore } from '@particle-network/authkit';
+import { useState, type ReactNode } from 'react'; // Changed
+import { AuthCoreContextProvider, useConnect, useAuthCore } from '@particle-network/authkit'; // Changed
 import { mainnet } from 'viem/chains';
-import { useRawInitData } from '@telegram-apps/sdk-react';
+import { AuthType } from '@particle-network/auth-core';
+import { useRawInitData } from '@telegram-apps/sdk-react'; // Changed
 import axios from 'axios';
 import './App.css';
 import xeroLogo from './assets/logo.png';
@@ -18,9 +19,7 @@ function ParticleProvider({ children }: { children: ReactNode }) {
         clientKey: 'cnysS13OCJsTHZXupUvB4uFiI0d2CNvFsNVqtmG3',
         appId: 'd4c2607d-7e24-4ba1-879a-ffa5e4c2040a',
         chains: [mainnet],
-        // The authTypes array is for the modal, so we can define what appears there.
-        // The private key import is a direct call, so it doesn't need to be listed here.
-        authTypes: ['email', 'google', 'twitter'],
+        authTypes:, // Changed
         wallet: { visible: true },
       }}
     >
@@ -29,15 +28,14 @@ function ParticleProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// This function now correctly expects the raw initData string
-async function saveWalletToBackend(initDataRaw: string | undefined, address: string | undefined) {
-    if (!initDataRaw || !address) {
-        console.error('Missing initDataRaw or address, cannot save.');
+async function saveWalletToBackend(initDataRaw: string | undefined, address: string | undefined) { // Changed parameter
+    if (!initDataRaw ||!address) {
+        console.error('Missing initDataRaw or address, cannot save.'); // Changed message
         return;
     }
     try {
         await axios.post(`${BACKEND_API_URL}/save-wallet`, {
-            initDataRaw: initDataRaw, // Sending the raw string as the backend expects
+            initDataRaw: initDataRaw, // Send the raw initData string
             address: address,
         });
         console.log('✅ Wallet info sent to backend successfully!');
@@ -46,37 +44,35 @@ async function saveWalletToBackend(initDataRaw: string | undefined, address: str
     }
 }
 
+
 function AuthComponent() {
   const { connect, disconnect, connected } = useConnect();
   const { userInfo } = useAuthCore();
-  const rawInitData = useRawInitData(); // Using the correct hook
+  const rawInitData = useRawInitData(); // Changed
   const [privateKey, setPrivateKey] = useState('');
 
-  // This handles social/email logins by opening the modal
   const handleGenerateWallet = async () => {
     try {
-      const connectedUserInfo = await connect();
+      const connectedUserInfo = await connect(); // Opens modal for email/social
       const evmWallet = connectedUserInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
-      await saveWalletToBackend(rawInitData, evmWallet);
+      await saveWalletToBackend(rawInitData, evmWallet); // Changed: pass rawInitData
     } catch (error) {
       console.error("Connect Error:", error);
     }
   };
 
-  // This handles private key import directly
   const handleImportWallet = async () => {
     if (!privateKey) {
       alert('Please enter a private key.');
       return;
     }
     try {
-      // Using the corrected properties for the connect call
       const connectedUserInfo = await connect({
-        socialType: 'privateKey',
-        account: privateKey,
+        socialType: 'privateKey', // Changed: Use string literal and 'socialType'
+        account: privateKey,      // Changed: Use 'account' for the key
       });
       const evmWallet = connectedUserInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
-      await saveWalletToBackend(rawInitData, evmWallet);
+      await saveWalletToBackend(rawInitData, evmWallet); // Changed: pass rawInitData
     } catch (error) {
       alert("Import failed. Please check the private key and try again.");
       console.error("Private Key Import Error:", error);
@@ -89,7 +85,8 @@ function AuthComponent() {
     return (
       <div className="card">
         <h3>✅ Wallet Connected</h3>
-        <p><strong>Address:</strong> {evmWallet || 'n/a'}</p>
+        <p><strong>Address:</strong> {evmWallet |
+| 'n/a'}</p>
         <button onClick={() => disconnect()}>Disconnect</button>
       </div>
     );
@@ -99,9 +96,10 @@ function AuthComponent() {
     <>
       <div className="action-section">
         <h3>Create a new wallet</h3>
-        <button onClick={handleGenerateWallet}>GENERATE WALLET</button>
+        <button onClick={handleGenerateWallet} disabled={!rawInitData}>GENERATE WALLET</button>
         <p className="description">Generate a wallet to control a new Xero cross-chain account.</p>
       </div>
+
       <div className="action-section">
         <h3>Import your wallet</h3>
         <form onSubmit={(e) => { e.preventDefault(); handleImportWallet(); }}>
