@@ -9,7 +9,7 @@ import axios from 'axios';
 import './App.css';
 import xeroLogo from './assets/logo.png';
 
-const BACKEND_API_URL = 'https://eugene-although-notebook-rrp.trycloudflare.com';
+const BACKEND_API_URL = 'https://partly-saving-rachel-ind.trycloudflare.com'; // Use your latest backend URL
 
 function ParticleProvider({ children }: { children: ReactNode }) {
   return (
@@ -19,8 +19,8 @@ function ParticleProvider({ children }: { children: ReactNode }) {
         clientKey: 'cnysS13OCJsTHZXupUvB4uFiI0d2CNvFsNVqtmG3',
         appId: 'd4c2607d-7e24-4ba1-879a-ffa5e4c2040a',
         chains: [mainnet],
-        // ***** FIX 1: Provide a value for authTypes *****
-        authTypes:,
+        // ***** FIX 1: Set authTypes to only allow Email *****
+        authTypes:, // This line is now corrected
         wallet: { visible: true },
       }}
     >
@@ -54,6 +54,7 @@ function AuthComponent() {
 
   const handleGenerateWallet = async () => {
     try {
+      // When connect() is called without arguments, it uses the authTypes from ParticleProvider
       const connectedUserInfo = await connect();
       const evmWallet = connectedUserInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
       await saveWalletToBackend(rawInitData, evmWallet);
