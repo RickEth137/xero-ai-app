@@ -70,7 +70,7 @@ function AuthComponent() {
     }
     try {
       const connectedUserInfo = await connect({
-        socialType: 'privateKey',
+        socialType: AuthType.privateKey,
         account: privateKey,
       });
       const evmWallet = connectedUserInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
