@@ -1,12 +1,14 @@
 // src/App.tsx
 
 import type { ReactNode } from 'react';
-// import { useState } from 'react'; // Unused import removed
 import { AuthCoreContextProvider, useConnect, useAuthCore } from '@particle-network/authkit';
 import { mainnet } from 'viem/chains';
-import { useRawInitData } from '@telegram-apps/sdk-react'; // Correct hook name
+import { useInitData } from '@telegram-apps/sdk-react';
+import axios from 'axios';
 import './App.css';
 import xeroLogo from './assets/logo.png';
+
+const BACKEND_API_URL = 'https://recipient-kong-d-somewhere.trycloudflare.com';
 
 function ParticleProvider({ children }: { children: ReactNode }) {
   return (
@@ -24,19 +26,47 @@ function ParticleProvider({ children }: { children: ReactNode }) {
   );
 }
 
+async function saveWalletToBackend(userId: number, address: string) {
+    try {
+        console.log(`Attempting to send data to backend: ${BACKEND_API_URL}/save-wallet`);
+        const response = await axios.post(`${BACKEND_API_URL}/save-wallet`, {
+            userId: userId,
+            address: address,
+        });
+        console.log('Backend Response:', response.data);
+        alert('Wallet saved to bot!');
+    } catch (error) {
+        console.error("🔴 FAILED TO SAVE WALLET TO BACKEND:", error);
+        alert("Error: Could not save wallet info to the bot. Check the console.");
+    }
+}
+
+
 function AuthComponent() {
   const { connect, disconnect, connected } = useConnect();
   const { userInfo } = useAuthCore();
-  
-  // Use the correct hook as specified by the error log
-  const rawInitData = useRawInitData();
+  const initData = useInitData();
   
   const handleConnect = async () => {
     try {
-      // We are only focused on getting the connection working.
-      await connect();
+      console.log('Connect button clicked. Waiting for user to log in...');
+      const connectedUserInfo = await connect();
+      console.log('✅ Particle login successful:', connectedUserInfo);
+      
+      const telegramUser = initData?.user;
+      const evmWallet = connectedUserInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
+
+      console.log('Found Telegram User ID:', telegramUser?.id);
+      console.log('Found EVM Wallet Address:', evmWallet);
+
+      if (telegramUser?.id && evmWallet) {
+        await saveWalletToBackend(telegramUser.id, evmWallet);
+      } else {
+        alert("Could not find Telegram User ID or Wallet Address after login.");
+      }
+
     } catch (error) {
-      console.error("Connect Error:", error);
+      console.error("Connect function failed:", error);
     }
   };
   
@@ -55,8 +85,7 @@ function AuthComponent() {
   return (
     <div className="action-section">
       <h3>Create or Connect Wallet</h3>
-      {/* The button is disabled until the Telegram data is ready */}
-      <button onClick={handleConnect} disabled={!rawInitData}>
+      <button onClick={handleConnect} disabled={!initData}>
         CONNECT / LOGIN
       </button>
       <p className="description">Connect with Email or Socials to control your Xero cross-chain account.</p>
