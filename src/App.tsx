@@ -70,8 +70,8 @@ function AuthComponent() {
     }
     try {
       const connectedUserInfo = await connect({
-        socialType: AuthType.privateKey,
-        account: privateKey,
+        loginType: 'privateKey', // Use loginType for private key import
+        account: privateKey,     // 'account' should be valid with loginType: 'privateKey'
       });
       const evmWallet = connectedUserInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
       await saveWalletToBackend(rawInitData, evmWallet);
