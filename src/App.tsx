@@ -9,6 +9,12 @@ import axios from 'axios';
 import './App.css';
 import xeroLogo from './assets/logo.png';
 
+// A more specific type for wallet entries, consult Particle Network docs for the exact type
+interface ParticleWallet {
+  chain_name: string;
+  public_address: string;
+}
+
 const BACKEND_API_URL = 'https://partly-saving-rachel-ind.trycloudflare.com'; // Use your latest backend URL
 
 function ParticleProvider({ children }: { children: ReactNode }) {
@@ -56,7 +62,7 @@ function AuthComponent() {
     try {
       // When connect() is called without arguments, it uses the authTypes from ParticleProvider
       const connectedUserInfo = await connect();
-      const evmWallet = connectedUserInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
+      const evmWallet = connectedUserInfo?.wallets?.find((w: ParticleWallet) => w.chain_name === 'evm_chain')?.public_address;
       await saveWalletToBackend(rawInitData, evmWallet);
     } catch (error) {
       console.error("Connect Error:", error);
@@ -70,10 +76,10 @@ function AuthComponent() {
     }
     try {
       const connectedUserInfo = await connect({
-        loginType: 'privateKey', // Use loginType for private key import
-        account: privateKey,     // 'account' should be valid with loginType: 'privateKey'
+        socialType: 'privateKey', // Revert to socialType, using a string literal
+        account: privateKey,
       });
-      const evmWallet = connectedUserInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
+      const evmWallet = connectedUserInfo?.wallets?.find((w: ParticleWallet) => w.chain_name === 'evm_chain')?.public_address;
       await saveWalletToBackend(rawInitData, evmWallet);
     } catch (error) {
       alert("Import failed. Please check the private key and try again.");
@@ -81,7 +87,7 @@ function AuthComponent() {
     }
   };
 
-  const evmWallet = userInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
+  const evmWallet = userInfo?.wallets?.find((w: ParticleWallet) => w.chain_name === 'evm_chain')?.public_address;
 
   if (connected) {
     return (
