@@ -1,10 +1,10 @@
 // src/App.tsx
 
-import { useState, type ReactNode } from 'react'; // Changed
-import { AuthCoreContextProvider, useConnect, useAuthCore } from '@particle-network/authkit'; // Changed
+import { useState, type ReactNode } from 'react';
+import { AuthCoreContextProvider, useConnect, useAuthCore } from '@particle-network/authkit';
 import { mainnet } from 'viem/chains';
-import { AuthType } from '@particle-network/auth-core';
-import { useRawInitData } from '@telegram-apps/sdk-react'; // Changed
+import { AuthType } from '@particle-network/auth-core'; // Make sure this is imported
+import { useRawInitData } from '@telegram-apps/sdk-react';
 import axios from 'axios';
 import './App.css';
 import xeroLogo from './assets/logo.png';
@@ -19,7 +19,8 @@ function ParticleProvider({ children }: { children: ReactNode }) {
         clientKey: 'cnysS13OCJsTHZXupUvB4uFiI0d2CNvFsNVqtmG3',
         appId: 'd4c2607d-7e24-4ba1-879a-ffa5e4c2040a',
         chains: [mainnet],
-        authTypes:, // Changed
+        // Corrected: Provide the auth types you want to enable
+        authTypes:,
         wallet: { visible: true },
       }}
     >
@@ -28,14 +29,14 @@ function ParticleProvider({ children }: { children: ReactNode }) {
   );
 }
 
-async function saveWalletToBackend(initDataRaw: string | undefined, address: string | undefined) { // Changed parameter
+async function saveWalletToBackend(initDataRaw: string | undefined, address: string | undefined) {
     if (!initDataRaw ||!address) {
-        console.error('Missing initDataRaw or address, cannot save.'); // Changed message
+        console.error('Missing initDataRaw or address, cannot save.');
         return;
     }
     try {
         await axios.post(`${BACKEND_API_URL}/save-wallet`, {
-            initDataRaw: initDataRaw, // Send the raw initData string
+            initDataRaw: initDataRaw,
             address: address,
         });
         console.log('✅ Wallet info sent to backend successfully!');
@@ -48,14 +49,14 @@ async function saveWalletToBackend(initDataRaw: string | undefined, address: str
 function AuthComponent() {
   const { connect, disconnect, connected } = useConnect();
   const { userInfo } = useAuthCore();
-  const rawInitData = useRawInitData(); // Changed
+  const rawInitData = useRawInitData();
   const [privateKey, setPrivateKey] = useState('');
 
   const handleGenerateWallet = async () => {
     try {
-      const connectedUserInfo = await connect(); // Opens modal for email/social
+      const connectedUserInfo = await connect();
       const evmWallet = connectedUserInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
-      await saveWalletToBackend(rawInitData, evmWallet); // Changed: pass rawInitData
+      await saveWalletToBackend(rawInitData, evmWallet);
     } catch (error) {
       console.error("Connect Error:", error);
     }
@@ -68,11 +69,11 @@ function AuthComponent() {
     }
     try {
       const connectedUserInfo = await connect({
-        socialType: 'privateKey', // Changed: Use string literal and 'socialType'
-        account: privateKey,      // Changed: Use 'account' for the key
+        socialType: 'privateKey',
+        account: privateKey,
       });
       const evmWallet = connectedUserInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
-      await saveWalletToBackend(rawInitData, evmWallet); // Changed: pass rawInitData
+      await saveWalletToBackend(rawInitData, evmWallet);
     } catch (error) {
       alert("Import failed. Please check the private key and try again.");
       console.error("Private Key Import Error:", error);
@@ -85,6 +86,8 @@ function AuthComponent() {
     return (
       <div className="card">
         <h3>✅ Wallet Connected</h3>
+        {/* Corrected: Use JavaScript logical OR |
+| */}
         <p><strong>Address:</strong> {evmWallet |
 | 'n/a'}</p>
         <button onClick={() => disconnect()}>Disconnect</button>
