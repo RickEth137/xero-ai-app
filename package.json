@@ -16,6 +16,7 @@
     "@particle-network/wallet": "^2.0.8",
     "@telegram-apps/sdk": "^3.10.0",
     "@telegram-apps/sdk-react": "^3.3.0",
+    "axios": "^1.9.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "viem": "^2.30.6"

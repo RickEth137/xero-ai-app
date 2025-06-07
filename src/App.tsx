@@ -2,9 +2,14 @@
 
 import type { ReactNode } from 'react';
 import { AuthCoreContextProvider, useConnect, useAuthCore } from '@particle-network/authkit';
-import { mainnet, polygon } from 'viem/chains';
+import { mainnet } from 'viem/chains';
+import { useInitData } from '@telegram-apps/sdk-react';
+import axios from 'axios';
 import './App.css';
 import xeroLogo from './assets/logo.png';
+
+// ★★★ Your Live Backend URL is now here ★★★
+const BACKEND_API_URL = 'https://recipient-kong-d-somewhere.trycloudflare.com';
 
 function ParticleProvider({ children }: { children: ReactNode }) {
   return (
@@ -13,7 +18,7 @@ function ParticleProvider({ children }: { children: ReactNode }) {
         projectId: '4fec5bff-a62c-484c-8ddc-fe5368af9cdf',
         clientKey: 'cnysS13OCJsTHZXupUvB4uFiI0d2CNvFsNVqtmG3',
         appId: 'd4c2607d-7e24-4ba1-879a-ffa5e4c2040a',
-        chains: [mainnet, polygon],
+        chains: [mainnet],
         wallet: { visible: true },
       }}
     >
@@ -22,18 +27,39 @@ function ParticleProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Function to send data to our backend
+async function saveWalletToBackend(userId, address) {
+    try {
+        console.log(`Sending wallet to backend: User ${userId}, Address ${address}`);
+        await axios.post(`${BACKEND_API_URL}/save-wallet`, {
+            userId: userId,
+            address: address,
+        });
+        console.log('Successfully saved wallet to backend.');
+        alert('Wallet saved to bot!'); // Give the user feedback
+    } catch (error) {
+        console.error("Failed to save wallet to backend:", error);
+        alert("Could not save wallet info to the bot. Please try reconnecting.");
+    }
+}
+
+
 function AuthComponent() {
   const { connect, disconnect, connected } = useConnect();
   const { userInfo } = useAuthCore();
+  const initData = useInitData();
   
   const handleConnect = async () => {
     try {
-      // The connect function returns user info upon successful login
       const connectedUserInfo = await connect();
       
-      // ★★★ This is the new line we added ★★★
-      // It will print your user details to the browser's console.
-      console.log('LOGIN SUCCESSFUL! User Info:', connectedUserInfo);
+      const telegramUser = initData?.user;
+      const evmWallet = connectedUserInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
+
+      // After connecting, send the info to our backend
+      if (telegramUser?.id && evmWallet) {
+        await saveWalletToBackend(telegramUser.id, evmWallet);
+      }
 
     } catch (error) {
       console.error("Connect Error:", error);
@@ -55,7 +81,7 @@ function AuthComponent() {
   return (
     <div className="action-section">
       <h3>Create or Connect Wallet</h3>
-      <button onClick={handleConnect}>
+      <button onClick={handleConnect} disabled={!initData}>
         CONNECT / LOGIN
       </button>
       <p className="description">Connect with Email or Socials to control your Xero cross-chain account.</p>
