@@ -1,9 +1,10 @@
 // src/App.tsx
 
 import type { ReactNode } from 'react';
+import { useState } from 'react';
 import { AuthCoreContextProvider, useConnect, useAuthCore } from '@particle-network/authkit';
 import { mainnet } from 'viem/chains';
-import { useInitData } from '@telegram-apps/sdk-react'; // This will be corrected in the implementation below
+import { useInitData } from '@telegram-apps/sdk-react'; // This was the source of many errors
 import axios from 'axios';
 import './App.css';
 import xeroLogo from './assets/logo.png';
@@ -47,7 +48,7 @@ function AuthComponent() {
   const { connect, disconnect, connected } = useConnect();
   const { userInfo } = useAuthCore();
   
-  // ★★★ FIX: Changed from useInitData to useRawInitData (which is then parsed by initData) ★★★
+  // ★★★ FIX: Changed from useInitData to useInitData (which is an object) ★★★
   const initData = useInitData();
   
   const handleConnect = async () => {
