@@ -3,11 +3,12 @@
 import type { ReactNode } from 'react';
 import { AuthCoreContextProvider, useConnect, useAuthCore } from '@particle-network/authkit';
 import { mainnet } from 'viem/chains';
-import { useRawInitData } from '@telegram-apps/sdk-react'; // Correct hook name
+import { useRawInitData } from '@telegram-apps/sdk-react';
 import axios from 'axios';
 import './App.css';
 import xeroLogo from './assets/logo.png';
 
+// This should be the public URL for your backend's tunnel
 const BACKEND_API_URL = 'https://consensus-shorter-hardware-hockey.trycloudflare.com';
 
 function ParticleProvider({ children }: { children: ReactNode }) {
@@ -27,21 +28,21 @@ function ParticleProvider({ children }: { children: ReactNode }) {
 }
 
 // Sends wallet data to our backend bot
-async function saveWalletToBackend(userId: number | undefined, address: string | undefined) {
-    if (!userId || !address) {
-        console.error("Missing userId or address, cannot save.");
+async function saveWalletToBackend(initDataRaw: string | undefined, address: string | undefined) {
+    if (!initDataRaw || !address) {
+        console.error("Missing initDataRaw or address, cannot save.");
         return;
     }
     try {
         await axios.post(`${BACKEND_API_URL}/save-wallet`, {
-            userId: userId,
+            initDataRaw: initDataRaw, // Sending the raw data string
             address: address,
         });
         console.log('✅ Wallet info sent to backend successfully!');
-        alert('Wallet saved to bot!');
+        alert('Wallet synced with bot!');
     } catch (error) {
         console.error("🔴 FAILED TO SAVE WALLET:", error);
-        alert("Error: Could not save wallet info. Check the browser and bot console for errors.");
+        alert("Error: Could not sync wallet with the bot.");
     }
 }
 
@@ -49,7 +50,7 @@ async function saveWalletToBackend(userId: number | undefined, address: string |
 function AuthComponent() {
   const { connect, disconnect, connected } = useConnect();
   const { userInfo } = useAuthCore();
-  const rawInitData = useRawInitData(); // Using the correct hook name
+  const rawInitData = useRawInitData();
   
   const handleConnect = async () => {
     try {
@@ -57,20 +58,9 @@ function AuthComponent() {
       
       const evmWallet = connectedUserInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
 
-      // This logic correctly parses the User ID from the raw data string
-      let telegramUserId: number | undefined;
-      if (rawInitData) {
-        const params = new URLSearchParams(rawInitData);
-        const userJson = params.get('user');
-        if (userJson) {
-            telegramUserId = JSON.parse(decodeURIComponent(userJson)).id;
-        }
-      }
-
-      if (telegramUserId && evmWallet) {
-        await saveWalletToBackend(telegramUserId, evmWallet);
-      } else {
-          alert("Could not find a valid Telegram User ID after login to save the wallet.");
+      // After connecting, send the raw initData string and wallet address to our backend
+      if (rawInitData && evmWallet) {
+        await saveWalletToBackend(rawInitData, evmWallet);
       }
 
     } catch (error) {
@@ -111,3 +101,7 @@ export default function App() {
         <footer className="footer">
           Powered By PARTICLE NETWORK
         </footer>
+      </div>
+    </ParticleProvider>
+  );
+}
