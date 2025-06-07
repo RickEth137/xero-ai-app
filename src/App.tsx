@@ -1,14 +1,15 @@
 // src/App.tsx
 
 import type { ReactNode } from 'react';
-import { AuthCoreContextProvider, useConnect, useAuthCore, useDisconnect } from '@particle-network/authkit';
+import { AuthCoreContextProvider, useConnect, useAuthCore } from '@particle-network/authkit';
 import { mainnet } from 'viem/chains';
-import { useRawInitData } from '@telegram-apps/sdk-react'; // ★★★ The final typo fix is here ★★★
+import { useInitData } from '@telegram-apps/sdk-react';
 import axios from 'axios';
 import './App.css';
 import xeroLogo from './assets/logo.png';
 
-const BACKEND_API_URL = 'https://consensus-shorter-hardware-hockey.trycloudflare.com'; // Using your latest tunnel URL
+// This should be the public URL for your backend's tunnel
+const BACKEND_API_URL = 'https://consensus-shorter-hardware-hockey.trycloudflare.com';
 
 function ParticleProvider({ children }: { children: ReactNode }) {
   return (
@@ -26,6 +27,7 @@ function ParticleProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Sends wallet data to our backend bot
 async function saveWalletToBackend(userId: number | undefined, address: string | undefined) {
     if (!userId || !address) {
         console.error("Missing userId or address, cannot save.");
@@ -40,29 +42,67 @@ async function saveWalletToBackend(userId: number | undefined, address: string |
         alert('Wallet saved to bot!');
     } catch (error) {
         console.error("🔴 FAILED TO SAVE WALLET:", error);
-        alert("Error: Could not save wallet info to the bot.");
+        alert("Error: Could not save wallet info. Check the browser and bot console for errors.");
     }
 }
+
 
 function AuthComponent() {
   const { connect, disconnect, connected } = useConnect();
   const { userInfo } = useAuthCore();
-  const rawInitData = useRawInitData(); // Using the correct hook
+  const initData = useInitData();
   
   const handleConnect = async () => {
     try {
       const connectedUserInfo = await connect();
       
+      const telegramUser = initData?.user;
       const evmWallet = connectedUserInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
 
-      // Logic to parse the user ID from the rawInitData string
-      let telegramUserId: number | undefined;
-      if (rawInitData) {
-        const params = new URLSearchParams(rawInitData);
-        const userJson = params.get('user');
-        if (userJson) {
-            telegramUserId = JSON.parse(decodeURIComponent(userJson)).id;
-        }
+      // This is the line that had the typo, now fixed.
+      if (telegramUser?.id && evmWallet) {
+        await saveWalletToBackend(telegramUser.id, evmWallet);
       }
 
-      if (telegramUserId && evmWallet) {
+    } catch (error) {
+      console.error("Connect Error:", error);
+    }
+  };
+  
+  const evmWallet = userInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
+
+  if (connected) {
+    return (
+      <div className="card">
+        <h3>✅ Wallet Connected</h3>
+        <p><strong>Address:</strong> {evmWallet || 'n/a'}</p>
+        <button onClick={() => disconnect()}>Disconnect</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="action-section">
+      <h3>Create or Connect Wallet</h3>
+      <button onClick={handleConnect} disabled={!initData}>
+        CONNECT / LOGIN
+      </button>
+      <p className="description">Connect with Email or Socials to control your Xero cross-chain account.</p>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ParticleProvider>
+      <div className="app-container">
+        <img src={xeroLogo} className="main-logo" alt="Xero Ai Logo" />
+        <h1 className="main-title">Xero Ai</h1>
+        <AuthComponent />
+        <footer className="footer">
+          Powered By PARTICLE NETWORK
+        </footer>
+      </div>
+    </ParticleProvider>
+  );
+}
