@@ -1,21 +1,19 @@
 // src/App.tsx
 
 import type { ReactNode } from 'react';
-import { AuthCoreContextProvider } from '@particle-network/authkit';
-import { useConnect, useAuthCore } from '@particle-network/authkit';
-import { mainnet } from 'viem/chains';
+import { AuthCoreContextProvider, useConnect, useAuthCore } from '@particle-network/authkit';
+import { mainnet, polygon } from 'viem/chains';
 import './App.css';
 import xeroLogo from './assets/logo.png';
 
 function ParticleProvider({ children }: { children: ReactNode }) {
   return (
     <AuthCoreContextProvider
-      // This is the simplest possible, bare-bones configuration
       options={{
         projectId: '4fec5bff-a62c-484c-8ddc-fe5368af9cdf',
         clientKey: 'cnysS13OCJsTHZXupUvB4uFiI0d2CNvFsNVqtmG3',
         appId: 'd4c2607d-7e24-4ba1-879a-ffa5e4c2040a',
-        chains: [mainnet],
+        chains: [mainnet, polygon],
         wallet: { visible: true },
       }}
     >
@@ -25,14 +23,18 @@ function ParticleProvider({ children }: { children: ReactNode }) {
 }
 
 function AuthComponent() {
-  // We get all functions from the one working hook
   const { connect, disconnect, connected } = useConnect();
   const { userInfo } = useAuthCore();
   
   const handleConnect = async () => {
-    // The simplest connect call that opens the default modal
     try {
-      await connect();
+      // The connect function returns user info upon successful login
+      const connectedUserInfo = await connect();
+      
+      // ★★★ This is the new line we added ★★★
+      // It will print your user details to the browser's console.
+      console.log('LOGIN SUCCESSFUL! User Info:', connectedUserInfo);
+
     } catch (error) {
       console.error("Connect Error:", error);
     }
@@ -50,7 +52,6 @@ function AuthComponent() {
     );
   }
 
-  // A simple, standard button that triggers the modal
   return (
     <div className="action-section">
       <h3>Create or Connect Wallet</h3>
