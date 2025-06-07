@@ -20,7 +20,7 @@ function ParticleProvider({ children }: { children: ReactNode }) {
         appId: 'd4c2607d-7e24-4ba1-879a-ffa5e4c2040a',
         chains: [mainnet],
         // ***** FIX 1: Set authTypes to only allow Email *****
-        authTypes:, // This line is now corrected
+        authTypes: [AuthType.email], // This line is now corrected
         wallet: { visible: true },
       }}
     >
@@ -87,10 +87,7 @@ function AuthComponent() {
     return (
       <div className="card">
         <h3>✅ Wallet Connected</h3>
-        {/* ***** FIX 2: Use JavaScript logical OR |
-| ***** */}
-        <p><strong>Address:</strong> {evmWallet |
-| 'n/a'}</p>
+        <p><strong>Address:</strong> {evmWallet || 'n/a'}</p>
         <button onClick={() => disconnect()}>Disconnect</button>
       </div>
     );
