@@ -1,6 +1,6 @@
 // src/App.tsx
 
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { AuthCoreContextProvider, useConnect, useAuthCore } from '@particle-network/authkit';
 import { mainnet } from 'viem/chains';
 import { AuthType } from '@particle-network/auth-core'; // Ensure this is imported
