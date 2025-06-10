@@ -9,12 +9,6 @@ import axios from 'axios';
 import './App.css';
 import xeroLogo from './assets/logo.png';
 
-// A more specific type for wallet entries, consult Particle Network docs for the exact type
-interface ParticleWallet {
-  chain_name: string;
-  public_address?: string; // Made optional to align with actual wallet object types
-}
-
 const BACKEND_API_URL = 'https://partly-saving-rachel-ind.trycloudflare.com'; // Use your latest backend URL
 
 function ParticleProvider({ children }: { children: ReactNode }) {
@@ -56,7 +50,6 @@ function AuthComponent() {
   const { connect, disconnect, connected } = useConnect();
   const { userInfo } = useAuthCore();
   const rawInitData = useRawInitData();
-  const [privateKey, setPrivateKey] = useState('');
 
   const handleGenerateWallet = async () => {
     try {
@@ -69,28 +62,6 @@ function AuthComponent() {
       await saveWalletToBackend(rawInitData, evmWallet);
     } catch (error) {
       console.error("Connect Error:", error);
-    }
-  };
-
-  const handleImportWallet = async () => {
-    if (!privateKey) {
-      alert('Please enter a private key.');
-      return;
-    }
-    try {
-      // FIXME: The 'socialType: "privateKey"' approach is causing a TypeScript error (TS2322).
-      // The string "privateKey" is not a valid member of the SocialAuthType enum.
-      // Please consult the Particle Network AuthKit documentation for the correct method
-      // to import a wallet using a private key with the useConnect hook.
-      const connectedUserInfo = await connect({
-        // socialType: 'privateKey', // This line causes TS2322
-        account: privateKey,
-      });
-      const evmWallet = connectedUserInfo?.wallets?.find(w => w.chain_name === 'evm_chain')?.public_address;
-      await saveWalletToBackend(rawInitData, evmWallet);
-    } catch (error) {
-      alert("Import failed. Please check the private key and try again.");
-      console.error("Private Key Import Error:", error);
     }
   };
 
@@ -112,21 +83,6 @@ function AuthComponent() {
         <h3>Create a new wallet</h3>
         <button onClick={handleGenerateWallet} disabled={!rawInitData}>GENERATE WALLET</button>
         <p className="description">Generate a wallet to control a new Xero cross-chain account.</p>
-      </div>
-
-      <div className="action-section">
-        <h3>Import your wallet</h3>
-        <form onSubmit={(e) => { e.preventDefault(); handleImportWallet(); }}>
-          <input
-            type="password"
-            className="pk-input"
-            value={privateKey}
-            onChange={(e) => setPrivateKey(e.target.value)}
-            placeholder="Import with Private Key"
-          />
-          <button type="submit">IMPORT WALLET</button>
-        </form>
-        <p className="description">Import a private key to control your Xero cross-chain account.</p>
       </div>
     </>
   );
