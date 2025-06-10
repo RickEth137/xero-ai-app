@@ -21,7 +21,6 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
-  /* This uses the background image you provided */
   background-image: url('./assets/background.png');
   background-size: cover;
   background-position: center;
@@ -105,9 +104,20 @@ button:hover {
   color: rgba(255, 255, 255, 0.4);
 }
 
+.divider {
+  margin: 20px 0;
+  font-size: 0.9em;
+  color: #888;
+}
+
+.import-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .card {
   padding: 2em;
   border: 1px solid #555;
   border-radius: 8px;
-  background-color: rgba(26, 26, 26, 0.8);
 }
