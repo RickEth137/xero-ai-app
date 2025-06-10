@@ -1,15 +1,15 @@
 // src/App.tsx
 
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { AuthCoreContextProvider, useConnect, useAuthCore } from '@particle-network/authkit';
 import { mainnet } from 'viem/chains';
-import { AuthType } from '@particle-network/auth-core'; // Ensure this is imported
 import { useRawInitData } from '@telegram-apps/sdk-react';
 import axios from 'axios';
 import './App.css';
 import xeroLogo from './assets/logo.png';
 
-const BACKEND_API_URL = 'https://partly-saving-rachel-ind.trycloudflare.com'; // Use your latest backend URL
+// This should be the public URL for your backend's tunnel
+const BACKEND_API_URL = 'https://outlet-stays-literary-ripe.trycloudflare.com';
 
 function ParticleProvider({ children }: { children: ReactNode }) {
   return (
@@ -19,8 +19,6 @@ function ParticleProvider({ children }: { children: ReactNode }) {
         clientKey: 'cnysS13OCJsTHZXupUvB4uFiI0d2CNvFsNVqtmG3',
         appId: 'd4c2607d-7e24-4ba1-879a-ffa5e4c2040a',
         chains: [mainnet],
-        // ***** FIX 1: Set authTypes to only allow Email *****
-        authTypes: [AuthType.email], // This line is now corrected
         wallet: { visible: true },
       }}
     >
@@ -29,19 +27,22 @@ function ParticleProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Sends wallet data to our backend bot
 async function saveWalletToBackend(initDataRaw: string | undefined, address: string | undefined) {
-    if (!initDataRaw ||!address) {
-        console.error('Missing initDataRaw or address, cannot save.');
+    if (!initDataRaw || !address) {
+        console.error("Missing initDataRaw or address, cannot save.");
         return;
     }
     try {
         await axios.post(`${BACKEND_API_URL}/save-wallet`, {
-            initDataRaw: initDataRaw,
+            initDataRaw: initDataRaw, // Sending the raw data string
             address: address,
         });
         console.log('✅ Wallet info sent to backend successfully!');
+        alert('Wallet synced with bot!');
     } catch (error) {
         console.error("🔴 FAILED TO SAVE WALLET:", error);
+        alert("Error: Could not sync wallet with the bot.");
     }
 }
 
@@ -50,22 +51,24 @@ function AuthComponent() {
   const { connect, disconnect, connected } = useConnect();
   const { userInfo } = useAuthCore();
   const rawInitData = useRawInitData();
-
-  const handleGenerateWallet = async () => {
+  
+  const handleConnect = async () => {
     try {
-      // When connect() is called without arguments, it uses the authTypes from ParticleProvider
       const connectedUserInfo = await connect();
-      // Let TypeScript infer the type of 'w' or use the SDK's provided type if known.
-      // The 'wallets' array elements are likely of a type like 'WalletInfo' from Particle SDK.
-      // If 'w.public_address' can be undefined, ensure your logic handles that.
-      const evmWallet = connectedUserInfo?.wallets?.find(w => w.chain_name === 'evm_chain')?.public_address;
-      await saveWalletToBackend(rawInitData, evmWallet);
+      
+      const evmWallet = connectedUserInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
+
+      // After connecting, send the raw initData string and wallet address to our backend
+      if (rawInitData && evmWallet) {
+        await saveWalletToBackend(rawInitData, evmWallet);
+      }
+
     } catch (error) {
       console.error("Connect Error:", error);
     }
   };
-
-  const evmWallet = userInfo?.wallets?.find(w => w.chain_name === 'evm_chain')?.public_address;
+  
+  const evmWallet = userInfo?.wallets?.find((w: any) => w.chain_name === 'evm_chain')?.public_address;
 
   if (connected) {
     return (
@@ -78,13 +81,13 @@ function AuthComponent() {
   }
 
   return (
-    <>
-      <div className="action-section">
-        <h3>Create a new wallet</h3>
-        <button onClick={handleGenerateWallet} disabled={!rawInitData}>GENERATE WALLET</button>
-        <p className="description">Generate a wallet to control a new Xero cross-chain account.</p>
-      </div>
-    </>
+    <div className="action-section">
+      <h3>Create or Connect Wallet</h3>
+      <button onClick={handleConnect} disabled={!rawInitData}>
+        CONNECT / LOGIN
+      </button>
+      <p className="description">Connect with Email or Socials to control your Xero cross-chain account.</p>
+    </div>
   );
 }
 
