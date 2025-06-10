@@ -30,17 +30,19 @@ body {
 .app-container {
   width: 100%;
   max-width: 390px;
-  margin: 0 auto;
+  /* margin: 0 auto; /* This is redundant if body is display:flex and centering it */
   padding: 2rem 1.5rem;
   text-align: center;
   display: flex;
   flex-direction: column;
+  align-items: center; /* Ensures flex items (logo, title, AuthComponent, footer) are centered */
+  box-sizing: border-box; /* Good practice for layout consistency */
 }
 
 .main-logo {
   width: 48px;
   height: 48px;
-  margin: 0 auto 1rem;
+  margin-bottom: 1rem; /* Horizontal auto margin is redundant with parent's align-items: center */
 }
 
 .main-title {
@@ -52,6 +54,7 @@ body {
 
 .action-section {
   margin-bottom: 2.5rem;
+  width: 100%; /* Ensures this section takes the full available width within its centered parent */
 }
 
 .action-section h3 {
@@ -120,4 +123,7 @@ button:hover {
   padding: 2em;
   border: 1px solid #555;
   border-radius: 8px;
+  /* background-color: rgba(26, 26, 26, 0.8); /* This was in your previous version, re-add if desired */
+  width: 100%; /* Ensures this section takes the full available width */
+  box-sizing: border-box; /* Include padding and border in the element's total width and height */
 }
