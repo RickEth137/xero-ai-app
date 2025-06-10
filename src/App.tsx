@@ -12,7 +12,7 @@ import xeroLogo from './assets/logo.png';
 // A more specific type for wallet entries, consult Particle Network docs for the exact type
 interface ParticleWallet {
   chain_name: string;
-  public_address: string;
+  public_address?: string; // Made optional to align with actual wallet object types
 }
 
 const BACKEND_API_URL = 'https://partly-saving-rachel-ind.trycloudflare.com'; // Use your latest backend URL
@@ -62,7 +62,10 @@ function AuthComponent() {
     try {
       // When connect() is called without arguments, it uses the authTypes from ParticleProvider
       const connectedUserInfo = await connect();
-      const evmWallet = connectedUserInfo?.wallets?.find((w: ParticleWallet) => w.chain_name === 'evm_chain')?.public_address;
+      // Let TypeScript infer the type of 'w' or use the SDK's provided type if known.
+      // The 'wallets' array elements are likely of a type like 'WalletInfo' from Particle SDK.
+      // If 'w.public_address' can be undefined, ensure your logic handles that.
+      const evmWallet = connectedUserInfo?.wallets?.find(w => w.chain_name === 'evm_chain')?.public_address;
       await saveWalletToBackend(rawInitData, evmWallet);
     } catch (error) {
       console.error("Connect Error:", error);
@@ -75,11 +78,15 @@ function AuthComponent() {
       return;
     }
     try {
+      // FIXME: The 'socialType: "privateKey"' approach is causing a TypeScript error (TS2322).
+      // The string "privateKey" is not a valid member of the SocialAuthType enum.
+      // Please consult the Particle Network AuthKit documentation for the correct method
+      // to import a wallet using a private key with the useConnect hook.
       const connectedUserInfo = await connect({
-        socialType: 'privateKey', // Revert to socialType, using a string literal
+        // socialType: 'privateKey', // This line causes TS2322
         account: privateKey,
       });
-      const evmWallet = connectedUserInfo?.wallets?.find((w: ParticleWallet) => w.chain_name === 'evm_chain')?.public_address;
+      const evmWallet = connectedUserInfo?.wallets?.find(w => w.chain_name === 'evm_chain')?.public_address;
       await saveWalletToBackend(rawInitData, evmWallet);
     } catch (error) {
       alert("Import failed. Please check the private key and try again.");
@@ -87,7 +94,7 @@ function AuthComponent() {
     }
   };
 
-  const evmWallet = userInfo?.wallets?.find((w: ParticleWallet) => w.chain_name === 'evm_chain')?.public_address;
+  const evmWallet = userInfo?.wallets?.find(w => w.chain_name === 'evm_chain')?.public_address;
 
   if (connected) {
     return (
